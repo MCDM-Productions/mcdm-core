@@ -1,30 +1,40 @@
+import Enum from './library/enum.mjs'
 
-/**
- * Main Module Organizational Tools
- */
-//import { MyLogger } from './my-logger.js';
+export class CORE {
 
-/**
- * Sub Modules
- */
-//import { MyClass } from './modules/my-class.js'
+  static #registrar = new Map();
 
-/**
- * Sub Apps
- */
-//import { MyDialog } from './apps/my-dialog.js';
-export class MODULE {
-  static SUB_MODULES = {
-    //MyLogger,
-    //MyClass
-  };
+  
+  /**
+   * @param {string} setupHook
+   * @param {Function} fn
+   */
+  static #registerModule(setupHook, fn) {
+    if (setupHook === 'init') {
+      throw new Error('Invalid registration stage "init" used.')
+    }
 
-  static SUB_APPS = {
-    //MyDialog  
+    if(CORE.#registrar.has(setupHook)) {
+      CORE.#registrar.get(setupHook).push(fn);
+    } else {
+      CORE.#registrar.set(setupHook, [fn]);
+    }
+
+    return;
+
+  }
+
+  static #callRegistration(...args) {
+    const system = game.system.version;
+    const {generation, build} = game.release;
+    Hooks.callAll('mcdm-core.register', CORE.#registerModule, {generation, build, system}, ...args); 
+
+    CORE.#registrar.forEach( (hookName, fnArray) => fnArray.forEach( fn => Hooks.once(hookName, fn ) ) );
   }
   
   static build() {
     //all startup tasks needed before sub module initialization
+    Hooks.once('init', CORE.callRegistration);
   }
 }
 
@@ -33,30 +43,5 @@ export class MODULE {
 /*
   Initialize Module
 */
-MODULE.build();
-
-/*
-  Initialize all Sub Modules
-*/
-Hooks.on(`setup`, () => {
-
-  Object.values(MODULE.SUB_MODULES).forEach(cl => cl.register());
-
-  //GlobalTesting (adds all imports to global scope)
-  //Object.entries(MODULE.SUB_MODULES).forEach(([key, cl])=> window[key] = cl);
-  //Object.entries(MODULE.SUB_APPS).forEach(([key, cl])=> window[key] = cl);
-});
-
-
-
-/*****Example Sub-Module Class******
-
-export class MyClass {
-
-  static register() {
-    //all initialization tasks
-  }
-}
-
-*/
+CORE.build();
 

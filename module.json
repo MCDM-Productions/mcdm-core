@@ -6,7 +6,7 @@
     "version": "0.0.1",
     "author": "",
     "authors": [
-        'MCDM Productions', 'Matthew Haentschke'
+        "MCDM Productions", "Matthew Haentschke"
     ],
     "esmodules": [
         "scripts/module.mjs"

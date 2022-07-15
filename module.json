@@ -1,16 +1,18 @@
 {
-    "name": "fvtt-dual-track-module",
-    "title": "FVTT Dual-Track Module Template",
-    "description": "A template repository.",
+    "name": "mcdm-core",
+    "title": "MCDM Productions: Core Support Module",
+    "description": "Implements the mechanics required by MCDM content and classes.",
     "system": [],
-    "version": "1.0.0",
+    "version": "0.0.1",
     "author": "",
     "authors": [
+        'MCDM Productions', 'Matthew Haentschke'
     ],
     "esmodules": [
         "scripts/module.mjs"
     ],
     "languages": [
+        "lang/en.json"
     ],
     "styles": [
     ],
@@ -18,6 +20,6 @@
     "url": "",
     "manifest": "",
     "download": "",
-    "minimumCoreVersion": "9",
-    "compatibleCoreVersion": "9"
+    "minimumCoreVersion": "10",
+    "compatibleCoreVersion": "10"
 }

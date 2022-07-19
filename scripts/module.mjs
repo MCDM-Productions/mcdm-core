@@ -1,44 +1,96 @@
-import Enum from './library/enum.mjs'
+import { Util, Enum } from './library/lib.mjs'
 
+/**
+ * @namespace
+ */
 export class CORE {
 
   static #registrar = new Map();
 
-  
   /**
-   * @param {string} setupHook
-   * @param {Function} fn
+   * @type Record<string, any>
    */
-  static #registerModule(setupHook, fn) {
+  static MCDMHooks = new Enum({
+    REGISTER: 'mcdm-core.register',
+    ADD_API: 'mcdm-core.addApi',
+  }, 'HOOK');
+
+  /**
+   * Wrapper for hook management. Groups functions together into a single
+   * anonymous hook function per hook name.
+   *
+   * @param {string} setupHook hook name to use for this registration/init
+   * @param {Function} fn hook function to be executed
+   * @param {boolean} [runOnce=true] persistent hook or one-time hook?
+   */
+  static registerPlugin (setupHook, fn, runOnce = true) {
     if (setupHook === 'init') {
       throw new Error('Invalid registration stage "init" used.')
     }
 
-    if(CORE.#registrar.has(setupHook)) {
+    if(CORE.#registrar.has([setupHook, runOnce])) {
       CORE.#registrar.get(setupHook).push(fn);
     } else {
-      CORE.#registrar.set(setupHook, [fn]);
+      CORE.#registrar.set([setupHook, runOnce], [fn]);
     }
 
     return;
-
   }
 
+  static #createHooks() {
+    const map = {
+      true: 'once',
+      false: 'on',
+    };
+
+    CORE.#registrar.forEach( (fnArray, hookInfo) => {
+      Hooks[map[hookInfo[1]]](hookInfo[0], (...args) => {
+        fnArray.forEach( fn => fn(...args) );
+      })
+    });
+  }
+
+  /**
+   * Helper function that allows MCDM plugins to add
+   * their specific API to the MCDM CORE namespace.
+   *
+   * @param {AnyClass} cls Parent class of provided methods/fields
+   * @param {Array<Function|any>} symbolList functions/fields to expose to module api
+   */
+  static addPluginApi(cls, symbolList) {
+    game.modules.get(Util.DATA.NAME).api[cls.name] = symbolList.reduce( (acc,curr) => {
+      acc[curr.name] = curr
+      return acc;
+    }, {});
+  }
+
+  /**
+   * @param {any[]} args any hook arguments passed from the system during
+   * this stage of initialization
+   */
   static #callRegistration(...args) {
+
+    /* initialize api namespace */
+    game.modules.get(Util.DATA.NAME).api = {};
+    CORE.addPluginApi(CORE, [CORE.MCDMHooks, CORE.registerPlugin, CORE.addPluginApi]);
+
     const system = game.system.version;
     const {generation, build} = game.release;
-    Hooks.callAll('mcdm-core.register', CORE.#registerModule, {generation, build, system}, ...args); 
 
-    CORE.#registrar.forEach( (hookName, fnArray) => fnArray.forEach( fn => Hooks.once(hookName, fn ) ) );
+    Hooks.callAll('mcdm-core.register', CORE.registerPlugin, {generation, build, system}, ...args); 
+    CORE.#createHooks();
+  }
+
+  static #callAddApi(...args) {
+    Hooks.callAll(CORE.MCDMHooks.ADD_API, CORE.addPluginApi, ...args);
   }
   
   static build() {
     //all startup tasks needed before sub module initialization
-    Hooks.once('init', CORE.callRegistration);
+    Hooks.once('init', CORE.#callRegistration);
+    Hooks.once('setup', CORE.#callAddApi);
   }
 }
-
-
 
 /*
   Initialize Module

@@ -2,6 +2,10 @@ import Enum from './enum.mjs'
 
 export default class Util {
 
+  /**
+   * @readonly
+   * @type Record<string, any>
+   */
   static DATA = new Enum( {
     NAME: 'mcdm-core',
     PATH: 'modules/mcdm-beastheart',

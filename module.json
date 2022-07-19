@@ -1,18 +1,23 @@
 {
     "name": "mcdm-core",
-    "title": "MCDM Productions: Core Support Module",
+    "title": "MCDM: Core Support Module",
     "description": "Implements the mechanics required by MCDM content and classes.",
-    "system": [],
+    "system": ["dnd5e"],
     "version": "0.0.1",
     "author": "",
     "authors": [
         "MCDM Productions", "Matthew Haentschke"
     ],
     "esmodules": [
-        "scripts/module.mjs"
+        "scripts/module.mjs",
+        "scripts/plugin/beastheart.mjs"
     ],
     "languages": [
-        "lang/en.json"
+      {
+        "lang": "en",
+        "name": "English",
+        "path": "lang/en.json"
+      }
     ],
     "styles": [
     ],

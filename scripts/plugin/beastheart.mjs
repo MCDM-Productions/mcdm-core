@@ -231,7 +231,7 @@ class Beastheart {
   static async scaleCompanion(caregiverActor = game.user.character) {
 
     if( !(caregiverActor instanceof Actor) ) {
-      ui.notifications?.warn(`Provided object named "${caregiverActor.name}" is not an instance of an ActorDocument`);
+      ui.notifications?.warn(`Provided object named "${caregiverActor?.name}" is not an instance of an Actor`);
       return;
     }
 
@@ -296,6 +296,11 @@ class Beastheart {
    * @returns {Promise}
    */
   static async rollFerocity(caregiverActor = game.user.character, die = '1d4', hostileBonus = 0){
+
+    if( !(caregiverActor instanceof Actor) ) {
+      ui.notifications?.warn(`Provided object named "${caregiverActor?.name}" is not an instance of an Actor`);
+      return;
+    }
 
     const feroPath = Beastheart.getFerocityPath();
 

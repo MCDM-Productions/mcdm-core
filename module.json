@@ -1,30 +1,42 @@
 {
-    "name": "mcdm-core",
-    "title": "MCDM: Core Support Module",
-    "description": "Implements the mechanics required by MCDM content and classes.",
-    "system": ["dnd5e"],
-    "version": "0.0.1",
-    "author": "",
-    "authors": [
-        "MCDM Productions", "Matthew Haentschke"
-    ],
-    "esmodules": [
-        "scripts/module.mjs",
-        "scripts/plugin/beastheart.mjs"
-    ],
-    "languages": [
-      {
-        "lang": "en",
-        "name": "English",
-        "path": "lang/en.json"
+  "title": "MCDM: Core Support Module",
+  "description": "Implements the mechanics required by MCDM content and classes.",
+  "version": "1.0.0",
+  "authors": [
+    {
+      "name": "MCDM Productions",
+      "url": "https://www.mcdmproductions.com/"
+    },
+    {
+      "name": "Matthew Haentschke",
+      "url": "https://github.com/trioderegion",
+      "discord": "honeybadger#2614"
+    }
+  ],
+  "esmodules": [
+    "scripts/module.mjs",
+    "scripts/plugin/beastheart.mjs"
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+  "id": "mcdm-core",
+  "relationships": {
+    "systems": [{
+      "id": "dnd5e",
+      "type": "system",
+      "manifest": "https://github.com/foundryvtt/dnd5e/releases/latest/download/system.json",
+      "compaibility": {
+        "verified": "2.0.0"
       }
-    ],
-    "styles": [
-    ],
-    "socket": false,
-    "url": "",
-    "manifest": "",
-    "download": "",
-    "minimumCoreVersion": "10",
-    "compatibleCoreVersion": "10"
+    }]
+  },
+  "compatibility": {
+    "minimum": "10",
+    "verified": "10"
+  }
 }

@@ -82,6 +82,7 @@ export class CORE {
   }
 
   static #callAddApi(...args) {
+    CORE.addPluginApi(Util, [Util.setting, Util.applySettings, Util.localize, Util.firstRunImport])
     Hooks.callAll(CORE.MCDMHooks.ADD_API, CORE.addPluginApi, ...args);
   }
   

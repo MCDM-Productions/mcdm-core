@@ -2,7 +2,7 @@
  * @typedef {typeof import('../module.mjs').CORE} CORE
  */
 
-import { Util, Enum } from '../library/lib.mjs'
+import { Enum } from '../library/lib.mjs'
 
 class Beastheart {
 
@@ -24,6 +24,9 @@ class Beastheart {
   }, 'BH')
 
   static #settings() {
+    const Util = game.modules.get('mcdm-core')?.api.Util;
+    if(!Util) console.error('Could not initialize mcdm-beastheart module from mcdm-core -- no API provided!');
+
     const settingsData = {
       'feroPath' : {
         scope: 'world',
@@ -51,6 +54,7 @@ class Beastheart {
    * @returns {string}
    */
   static getFerocityPath() {
+    const Util = game.modules.get('mcdm-core')?.api.Util;
     const world = Util.setting(Beastheart.#BH.RES_SETTING);
     return world;
   }
@@ -67,6 +71,7 @@ class Beastheart {
   static getBondedActor(actor) {
     
     //get the bonded actor ID
+    const Util = game.modules.get('mcdm-core')?.api.Util;
     const bondId = actor?.getFlag(Util.DATA.NAME, Beastheart.#BH.LINK_FLAG)
 
     if(!bondId){
@@ -115,17 +120,19 @@ class Beastheart {
    * @param {Object<string, string|number>} versionInfo
    */
   static #register(registrar, versionInfo) {
-    console.log(`Registering Beastheart Module`, versionInfo);
-    registrar('setup', Beastheart.#settings, true);
+    console.log(`Registering Beastheart Plugin`, versionInfo);
     registrar('updateActor', Beastheart.#ferocityLink, false);
   }
 
   /**
    * Hook handler for mcdm-core api registration
+   * and any other setup tasks that require
+   * the mcdm-core API
    *
    * @param {CORE["addPluginApi"]} helper
    */
   static #addApi(helper) {
+    Beastheart.#settings();
     helper(Beastheart, [Beastheart.linkCaregiver, Beastheart.scaleCompanion, Beastheart.rollFerocity, Beastheart.getFerocityPath, Beastheart.getBondedActor, Beastheart.isCaregiver, Beastheart.isCompanion]);
   }
 
@@ -141,6 +148,8 @@ class Beastheart {
    * @returns {Promise<undefined>}
    */
   static async #ferocityLink(actor, update, options, user) {
+
+    const Util = game.modules.get('mcdm-core')?.api.Util;
 
     /* We will only handle updates that we issued that was NOT caused by a link update */
     if(user !== game.userId || !!(Beastheart.#BH.LINK_FLAG in options)) return;
@@ -169,6 +178,8 @@ class Beastheart {
    * @returns {Promise}
    */
   static async linkCaregiver() {
+
+    const Util = game.modules.get('mcdm-core')?.api.Util;
     
     /* find all owned Beastheart characters */
     const hearts = game.actors.filter( actor => Beastheart.isCaregiver(actor));

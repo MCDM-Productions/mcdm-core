@@ -1,4 +1,4 @@
-import { Util, Enum } from './library/lib.mjs'
+import { Util, Enum, LibWrapperShim } from './library/lib.mjs'
 
 /**
  * @namespace
@@ -6,7 +6,7 @@ import { Util, Enum } from './library/lib.mjs'
 export class CORE {
 
   static #registrar = new Map();
-
+  
   /**
    * @type Record<string, any>
    */
@@ -72,7 +72,12 @@ export class CORE {
 
     /* initialize api namespace */
     game.modules.get(Util.DATA.NAME).api = {};
-    CORE.addPluginApi(CORE, [CORE.MCDMHooks, CORE.registerPlugin, CORE.addPluginApi]);
+
+    /* construct libwrapper shim and get patch helper */
+    const innerPatch = LibWrapperShim.register();
+    const patch = (...args) => innerPatch(Util.DATA.NAME, ...args);
+
+    CORE.addPluginApi(CORE, [CORE.MCDMHooks, CORE.registerPlugin, CORE.addPluginApi, patch]);
 
     const system = game.system.version;
     const {generation, build} = game.release;

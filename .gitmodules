@@ -1,0 +1,3 @@
+[submodule "scripts/library/honeywrap"]
+	path = scripts/library/honeywrap
+	url = https://github.com/trioderegion/honeywrap.git

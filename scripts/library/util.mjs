@@ -8,9 +8,9 @@ export default class Util {
    */
   static DATA = new Enum( {
     NAME: 'mcdm-core',
-    PATH: 'modules/mcdm-beastheart',
+    PATH: 'modules/mcdm-core',
     TITLE: 'MCDM Core'
-  });
+  }, 'DATA');
 
   static localize(key, data) {
     return game.i18n.format(key, data);

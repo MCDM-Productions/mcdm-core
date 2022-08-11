@@ -15,7 +15,8 @@
   ],
   "esmodules": [
     "scripts/module.mjs",
-    "scripts/plugin/beastheart.mjs"
+    "scripts/plugin/beastheart.mjs",
+    "scripts/plugin/illrigger.mjs"
   ],
   "languages": [
     {

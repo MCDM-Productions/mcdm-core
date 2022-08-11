@@ -11,14 +11,12 @@ export class Illrigger {
 
   static #register(_, versionInfo) {
     console.log(`Registering Illrigger Plugin`, versionInfo);
-    this.#config();
-    this.#patch();
   }
 
   static #addApi(_) {
     /** no api to add, but we need to use the CORE patch function */
-    this.#config();
-    this.#patch();
+    Illrigger.#config();
+    Illrigger.#patch();
   }
 
   static #config() {
@@ -94,9 +92,9 @@ export class Illrigger {
 
   static #patch() {
 
-    const CORE = game.modules.get('mcdm-core')?.api.Util;
+    const { CORE } = game.modules.get('mcdm-core')?.api;
     if(!CORE) console.error('Could not initialize Illrigger plugin from mcdm-core -- no API provided!');
-    const target = 'game.dnd5e.entities.Actor5e.prototype';
+    const target = 'dnd5e.documents.Actor5e.prototype';
 
     const patches = {
       prepareDerivedData: {
@@ -105,7 +103,7 @@ export class Illrigger {
       }
     }
 
-    CORE.patch('mcdm-core', target, patches);
+    CORE.patch(target, patches);
 
   }
 
@@ -121,7 +119,7 @@ export class Illrigger {
     wrapped(...args); 
 
     /* prepare any illrigger progression */ 
-    const {name, type, items, data: {spells}} = this.system;
+    const {name, type, items, system: {spells}} = this;
 
     /* only consider PCs (for now?) */
     if (type !== 'character') return;

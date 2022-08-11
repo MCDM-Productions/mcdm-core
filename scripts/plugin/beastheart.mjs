@@ -72,7 +72,7 @@ class Beastheart {
     
     //get the bonded actor ID
     const Util = game.modules.get('mcdm-core')?.api.Util;
-    const bondId = actor?.getFlag(Util.DATA.NAME, Beastheart.#BH.LINK_FLAG)
+    const bondId = actor?.getFlag('mcdm-core', Beastheart.#BH.LINK_FLAG)
 
     if(!bondId){
       console.debug(`Actor "${actor.name}" is not bonded to a Caregiver or Companion.`);

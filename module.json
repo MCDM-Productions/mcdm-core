@@ -39,5 +39,8 @@
   "compatibility": {
     "minimum": "10",
     "verified": "10"
-  }
+  },
+  "url": "https://github.com/trioderegion/mcdm-core",
+  "manifest": "",
+  "download": "",
 }

@@ -13,7 +13,7 @@ export default class Util {
   }, 'DATA');
 
   static localize(key, data) {
-    return game.i18n.format(key, data);
+    return game.i18n.format(`mcdmcore.${key}`, data);
   }
 
   static setting(name, scope = Util.DATA.NAME) {

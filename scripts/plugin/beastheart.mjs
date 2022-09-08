@@ -25,7 +25,7 @@ class Beastheart {
 
   static #settings() {
     const Util = game.modules.get('mcdm-core')?.api.Util;
-    if(!Util) console.error('Could not initialize mcdm-beastheart module from mcdm-core -- no API provided!');
+    if(!Util) console.error(Util.localize('common.plugin.noApi'));
 
     const settingsData = {
       'feroPath' : {
@@ -33,12 +33,18 @@ class Beastheart {
         config: true,
         type: String,
         choices: {
-          'system.resources.primary.value': Util.localize('resources.primary.value'),
-          'system.resources.primary.max': Util.localize('resources.primary.max'),
-          'system.resources.secondary.value': Util.localize('resources.secondary.value'),
-          'system.resources.secondary.max': Util.localize('resources.secondary.max'),
-          'system.resources.tertiary.value': Util.localize('resources.tertiary.value'),
-          'system.resources.tertiary.max': Util.localize('resources.tertiary.max'),
+          'system.resources.primary.value': game.i18n.localize('DND5E.ResourcePrimary') + " " + game.i18n.localize('CARD.Value'),
+
+          'system.resources.primary.max': game.i18n.localize('DND5E.ResourcePrimary') + " " + game.i18n.localize('Maximum'),
+
+          'system.resources.secondary.value': game.i18n.localize('DND5E.ResourceSecondary') + " " + game.i18n.localize('CARD.Value'),
+
+          'system.resources.secondary.max': game.i18n.localize('DND5E.ResourceSecondary') + " " + game.i18n.localize('Maximum'),
+
+          'system.resources.tertiary.value': game.i18n.localize('DND5E.ResourceTertiary') + " " + game.i18n.localize('CARD.Value'),
+
+          'system.resources.tertiary.max': game.i18n.localize('DND5E.ResourceTertiary') + " " + game.i18n.localize('Maximum'),
+
         },
         default: 'system.resources.primary.value'
       },
@@ -363,7 +369,7 @@ class Beastheart {
     }
     const currentFerocity = getProperty(caregiver, feroPath);
 
-    const feroRoll = await new Roll(`${currentFerocity}[current] + @scale.beastheart.ferogain + ${die} + ${nearby}`).evaluate({async:true}, caregiver.getRollData() );
+    const feroRoll = await new Roll(`${currentFerocity ?? 0}[current] + @scale.beastheart.ferogain + ${die} + ${nearby}`).evaluate({async:true}, caregiver.getRollData() );
     const total = feroRoll.total;
 
     await feroRoll.toMessage({flavor: total >= 10 ? 'Ferocity Roll - Rampage Threat!' : 'Ferocity Roll', speaker: ChatMessage.getSpeaker({actor: chosenCompanion})});

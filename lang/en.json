@@ -1,1 +1,24 @@
-{}
+{
+  "mcdmcore": {
+    "error": {
+      "badRegStage": "Invalid registration stage 'init' used during plugin registration",
+      "enum": {
+        "badField": "Enum field 'name' is not allowed",
+        "notFound": "Member '{name}' not found on the Enum '{class}'.",
+        "noAdd": "Adding new members to Enums is not allowed."
+      }
+    },
+    "setting":{
+      "feroPath": {
+        "name": "Actor Resource for Ferocity",
+        "hint": "Path to the actor field to be used to track and link ferocity between a Beastheart and their Companion."
+      }
+    },
+    "common": {
+      "plugin": {
+        "noApi": "Could not initialize [{module}] from mcdm-core: No API provided!"
+      
+      }
+    }
+  }
+}

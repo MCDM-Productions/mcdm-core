@@ -1,8 +1,9 @@
 import { Util, Enum, LibWrapperShim } from './library/lib.mjs'
 
 /**
- * @namespace
+ * @namespace API
  */
+
 export class CORE {
 
   static #registrar = new Map();
@@ -25,7 +26,7 @@ export class CORE {
    */
   static registerPlugin (setupHook, fn, runOnce = true) {
     if (setupHook === 'init') {
-      throw new Error('Invalid registration stage "init" used.')
+      throw new Error(Util.localize('error.badRegStage'));
     }
 
     if(CORE.#registrar.has([setupHook, runOnce])) {

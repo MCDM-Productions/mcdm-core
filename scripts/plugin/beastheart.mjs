@@ -77,7 +77,6 @@ class Beastheart {
   static getBondedActor(actor) {
     
     //get the bonded actor ID
-    const Util = game.modules.get('mcdm-core')?.api.Util;
     const bondId = actor?.getFlag('mcdm-core', Beastheart.#BH.LINK_FLAG)
 
     if(!bondId){
@@ -100,12 +99,24 @@ class Beastheart {
   }
 
   /**
-   * Helper method for checking if a given actor is a Beastheart Caregiver
+   * Helper method for checking if a given actor is a Linked Caregiver
    *
    * @param {Actor} actor Actor under test
    * @param {boolean} [owned=true] Consider only owned actors
    */
   static isCaregiver(actor, owned = true) {
+    if (owned && !actor.isOwner) return false;
+    const bondId = actor?.getFlag('mcdm-core', Beastheart.#BH.LINK_FLAG)
+    return !!bondId;
+  }
+
+  /**
+   * Helper method for checking if a given actor is a Beastheart 
+   *
+   * @param {Actor} actor Actor under test
+   * @param {boolean} [owned=true] Consider only owned actors
+   */
+  static isBeastHeart(actor, owned = true) {
     return !!(Beastheart.#getClass(actor, Beastheart.#BH.BH_CLASS, owned))
   }
 
@@ -139,7 +150,7 @@ class Beastheart {
    */
   static #addApi(helper) {
     Beastheart.#settings();
-    helper(Beastheart, [Beastheart.linkCaregiver, Beastheart.scaleCompanion, Beastheart.rollFerocity, Beastheart.getFerocityPath, Beastheart.getBondedActor, Beastheart.isCaregiver, Beastheart.isCompanion]);
+    helper(Beastheart, [Beastheart.linkCaregiver, Beastheart.scaleCompanion, Beastheart.rollFerocity, Beastheart.getFerocityPath, Beastheart.getBondedActor, Beastheart.isCaregiver, Beastheart.isBeastHeart, Beastheart.isCompanion]);
   }
 
   /**
@@ -172,7 +183,7 @@ class Beastheart {
       /* only need to update if they are actually different */
       const linkedActor = game.actors.get(linkedActorId);
       if(getProperty(actor,Beastheart.getFerocityPath()) != getProperty(linkedActor,Beastheart.getFerocityPath())){
-        await linkedActor.update({[Beastheart.getFerocityPath()]: priValue}, {[Beastheart.#BH.LINK_FLAG]: true});
+        await linkedActor.update({[Beastheart.getFerocityPath()]: priValue}, {[Beastheart.#BH.LINK_FLAG]: actor.id});
       }
     }
   }
@@ -187,8 +198,8 @@ class Beastheart {
 
     const Util = game.modules.get('mcdm-core')?.api.Util;
     
-    /* find all owned Beastheart characters */
-    const hearts = game.actors.filter( actor => Beastheart.isCaregiver(actor));
+    /* find all owned characters */
+    const hearts = game.actors.filter( actor => actor.isOwner);
     const caregivers = hearts.reduce( (acc, actor) => acc += `<option value="${actor.id}">${actor.name}</option>`,'');
 
     /* find all owned Monstrous Companions */
@@ -223,15 +234,17 @@ class Beastheart {
 
       /* if companion is already linked, grab that caregive and unlink */
       const prevCare = companion.getFlag(Util.DATA.NAME, Beastheart.#BH.LINK_FLAG);
-      if (prevCare) await game.actors.get(prevCare).unsetFlag(Util.DATA.NAME, Beastheart.#BH.LINK_FLAG);
+      if (prevCare) await game.actors.get(prevCare)?.unsetFlag(Util.DATA.NAME, Beastheart.#BH.LINK_FLAG);
 
       /* if caregiver is already linked, grab that companion and unlink */
       const prevComp = caregiver.getFlag(Util.DATA.NAME, Beastheart.#BH.LINK_FLAG);
-      if (prevComp) await game.actors.get(prevComp).unsetFlag(Util.DATA.NAME, Beastheart.#BH.LINK_FLAG);
+      if (prevComp) await game.actors.get(prevComp)?.unsetFlag(Util.DATA.NAME, Beastheart.#BH.LINK_FLAG);
 
       /* establish our new link pair */
       await caregiver.setFlag(Util.DATA.NAME, Beastheart.#BH.LINK_FLAG, choices.companion);
       await companion.setFlag(Util.DATA.NAME, Beastheart.#BH.LINK_FLAG, choices.caregiver);
+      ui.notifications.info(`${companion.name} linked to ${caregiver.name}`);
+      await Beastheart.scaleCompanion(companion);
     }
 
   }
@@ -241,32 +254,57 @@ class Beastheart {
    * its companion's class level, HP, and spellDC to match the caregiver's current
    * progression.
    *
-   * @param {ClientDocument} caregiverActor
+   * @param {Actor} companion
    *
    * @returns {Promise}
    */
-  static async scaleCompanion(caregiverActor = game.user.character) {
+  static async scaleCompanion(companion) {
 
-    if( !(caregiverActor instanceof Actor) ) {
-      ui.notifications?.warn(`Provided object named "${caregiverActor?.name}" is not an instance of an Actor`);
-      return;
+    /* if an owned, linked companion is selected, use that, otherwise prompt*/
+    let companionActor = !!companion ? companion : canvas.tokens.controlled[0]?.actor;
+    let bondId = companionActor?.getFlag('mcdm-core', Beastheart.#BH.LINK_FLAG)
+    if (!bondId) {
+     /* prompt for companion to scale */   
+
+      /* find all owned Monstrous Companions */
+      const comps = game.actors.filter( actor => Beastheart.isCompanion(actor));
+      const companions = comps.reduce( (acc, actor) => acc += `<option value="${actor.id}">${actor.name}</option>`,'');
+
+      const content = `
+<form class="flexrow" style="margin-bottom:1em;">
+  <div class="flexcol" style="align-items:center;">
+    <label for="companion"><h3>Companion</h3></label>
+    <select name="companion">${companions}</select>
+  </div>
+</form>`;
+
+      const callback = (html) => {
+        let companion = html.find('[name="companion"]').val();
+        return companion;
+      };
+
+      /* Prompt for actors to bond together */
+      const selected = await Dialog.prompt({content, title: "Select Companion to Scale", callback, rejectClose: false})
+
+      if(selected) {
+        companionActor = game.actors.get(selected);
+        bondId = companionActor?.getFlag('mcdm-core', Beastheart.#BH.LINK_FLAG)
+      }
     }
 
-    //find my possessed character's companion
-    const companion = Beastheart.getBondedActor(caregiverActor);
-    if(!companion) return;
+    const caregiverActor = game.actors.get(bondId);
+
+    if( !caregiverActor ) {
+      ui.notifications?.warn(`Cannot identify caregiver actor for ${companionActor?.name}`);
+      return;
+    }
 
     //Perform needed updates
 
     // 1) Class level adjustment
-    const careLevel = Beastheart.#getClass(caregiverActor, Beastheart.#BH.BH_CLASS)?.system.levels;
+    const careLevel = foundry.utils.getProperty(caregiverActor, 'system.details.level') ?? 1;
 
-    if(!careLevel) {
-      ui.notifications?.error('Selected Caregiver does not have a Beastheart class item. Stopping updates.');
-      return;
-    }
-
-    const compClassItem = Beastheart.#getClass(companion, Beastheart.#BH.MC_CLASS);
+    const compClassItem = Beastheart.#getClass(companionActor, Beastheart.#BH.MC_CLASS);
 
     if(!compClassItem) {
       ui.notifications?.error('Selected Companion does not have a Monstrous Companion class item. Stopping updates.');
@@ -277,7 +315,7 @@ class Beastheart {
     await compClassItem.update({'system.levels': careLevel});
 
     // 2) Max HP Adjustment. Class item contains `@scale.moncom.hpbase` as the scalor
-    const base = Number(companion.getRollData().scale.moncom.hpbase);
+    const base = Number(companionActor.getRollData().scale.moncom.hpbase);
     if(isNaN(base)) {
       ui.notifications?.error('Could not derive HP scaling from "@scale.moncom.hpbase". Ensure this scale value is present and configured. Stopping updates.');
       return;
@@ -289,15 +327,18 @@ class Beastheart {
     const caregiverDC = caregiverActor.system.attributes.spelldc;
 
     //get current spellcasting stat
-    const spellstat = companion.system.attributes.spellcasting;
+    const spellstat = companionActor.system.attributes.spellcasting;
     if (spellstat.length !== 3) {
       ui.notifications?.warn('Companion does not have a defined spellcasting ability. Please select one in order to properly scale any saving throw DCs.')
     }
 
-    const companionBaseDC = (companion.system.abilities[spellstat]?.mod ?? 0) + companion.system.attributes.prof + 8;
-    const dcModification = careLevel > 1 ? caregiverDC - companionBaseDC : companion.system.attributes.prof + 10 - companionBaseDC;
+    const companionBaseDC = (companionActor.system.abilities[spellstat]?.mod ?? 0) + companionActor.system.attributes.prof + 8;
+    const dcModification = careLevel > 1 ? caregiverDC - companionBaseDC : companionActor.system.attributes.prof + 10 - companionBaseDC;
 
-    companion.update({'system.attributes.hp.max': newMax, 'system.bonuses.spell.dc': `+ ${dcModification}`}) 
+    await companionActor.update({'system.attributes.hp.max': newMax, 'system.bonuses.spell.dc': `+ ${dcModification}`});
+
+    ui.notifications.info(`${companionActor.name} scaled to level ${careLevel}`);
+
   }
 
   /**
@@ -305,27 +346,35 @@ class Beastheart {
    * on dialog user input, prompts for how to handle a Rampage check (if it occurs), and activates
    * the companion's Rampage Bonus or Furious Rampage Bonus depending on the caregiver's features.
    *
-   * @param {Actor} [caregiverActor=game.user.character]
+   * @param {Actor} [companionActor]
    * @param {string} [die='1d4'] Size of ferocity die to roll
    * @param {number} [hostileBonus=0] Prepopulate ferocity roll bonus which
    *   describes the number of enemies within 5 feet.
    *
    * @returns {Promise}
    */
-  static async rollFerocity(caregiverActor = game.user.character, die = '1d4', hostileBonus = 0){
+  static async rollFerocity(companionActor = undefined, die = '1d4', hostileBonus = 0){
+    
+    let caregiverActor;
 
-    if( !(caregiverActor instanceof Actor) ) {
-      ui.notifications?.warn(`Provided object named "${caregiverActor?.name}" is not an instance of an Actor`);
-      return;
+    /* if provided with a companion, use it, otherwise, derive from possessed */
+    if(!companionActor) {
+      if (!game.user.character) {
+        ui.notifications.error(`No assigned character, or assigned character is not a caregiver.`);
+        return;
+      }
+
+      caregiverActor = game.user.character;
+    } else {
+      caregiverActor = Beastheart.getBondedActor(companionActor)
     }
 
+    companionActor = Beastheart.getBondedActor(caregiverActor)
     const feroPath = Beastheart.getFerocityPath();
 
     //find all owned Monstrous Companions
     const comps = game.actors.filter( actor => Beastheart.isCompanion(actor, true));
 
-    //find my possessed character's companion
-    const companionActor = Beastheart.getBondedActor(caregiverActor);
     const defaultCompName = companionActor?.name + " (Default)";
 
     const companions = comps.reduce( (acc, actor) => acc += `<option value="${caregiverActor.id}">${actor.name}</option>`, companionActor ? `<option value="${companionActor.id}">${defaultCompName}</option>` : '');
